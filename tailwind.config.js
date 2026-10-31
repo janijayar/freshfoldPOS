@@ -1,0 +1,133 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: ['class', '[data-theme="dark"]'],
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        bg: 'var(--color-bg)',
+        surface: 'var(--color-surface)',
+        'surface-elevated': 'var(--color-surface-elevated)',
+        border: 'var(--color-border)',
+        'border-input': 'var(--color-border-input)',
+        'border-focus': 'var(--color-border-focus)',
+        text: 'var(--color-text)',
+        'text-muted': 'var(--color-text-muted)',
+        'text-inverted': 'var(--color-text-inverted)',
+        accent: {
+          DEFAULT: 'var(--color-accent)',
+          hover: 'var(--color-accent-hover)',
+          muted: 'var(--color-accent-muted)',
+        },
+        'on-accent': 'var(--color-on-accent)',
+        danger: {
+          DEFAULT: 'var(--color-danger)',
+          muted: 'var(--color-danger-muted)',
+        },
+        success: {
+          DEFAULT: 'var(--color-success)',
+          muted: 'var(--color-success-muted)',
+        },
+        warning: {
+          DEFAULT: 'var(--color-warning)',
+          muted: 'var(--color-warning-muted)',
+        },
+        info: {
+          DEFAULT: 'var(--color-info)',
+          muted: 'var(--color-info-muted)',
+        },
+      },
+      fontFamily: {
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
+      },
+      fontSize: {
+        xs: ['var(--text-xs)', { lineHeight: 'var(--text-xs-line)' }],
+        sm: ['var(--text-sm)', { lineHeight: 'var(--text-sm-line)' }],
+        base: ['var(--text-base)', { lineHeight: 'var(--text-base-line)' }],
+        lg: ['var(--text-lg)', { lineHeight: 'var(--text-lg-line)' }],
+        xl: ['var(--text-xl)', { lineHeight: 'var(--text-xl-line)' }],
+        '2xl': ['var(--text-2xl)', { lineHeight: 'var(--text-2xl-line)' }],
+        '3xl': ['var(--text-3xl)', { lineHeight: 'var(--text-3xl-line)' }],
+        '4xl': ['var(--text-4xl)', { lineHeight: 'var(--text-4xl-line)' }],
+      },
+      fontWeight: {
+        normal: 'var(--font-normal)',
+        medium: 'var(--font-medium)',
+        semibold: 'var(--font-semibold)',
+        bold: 'var(--font-bold)',
+      },
+      spacing: {
+        0: 'var(--space-0)',
+        1: 'var(--space-1)',
+        2: 'var(--space-2)',
+        3: 'var(--space-3)',
+        4: 'var(--space-4)',
+        5: 'var(--space-5)',
+        6: 'var(--space-6)',
+        8: 'var(--space-8)',
+        10: 'var(--space-10)',
+        12: 'var(--space-12)',
+        16: 'var(--space-16)',
+      },
+      borderRadius: {
+        none: 'var(--radius-none)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        full: 'var(--radius-full)',
+      },
+      boxShadow: {
+        none: 'var(--shadow-none)',
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        xl: 'var(--shadow-xl)',
+        focus: 'var(--shadow-focus)',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        normal: '200ms',
+        slow: '300ms',
+      },
+      transitionTimingFunction: {
+        default: 'ease-out',
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      maxWidth: {
+        content: 'var(--max-content-width)',
+      },
+      width: {
+        sidebar: 'var(--sidebar-width)',
+        'sidebar-collapsed': 'var(--sidebar-collapsed-width)',
+      },
+      height: {
+        header: 'var(--header-height)',
+        'tab-bar': 'var(--mobile-tab-bar-height)',
+      },
+      zIndex: {
+        base: 'var(--z-base)',
+        dropdown: 'var(--z-dropdown)',
+        sticky: 'var(--z-sticky)',
+        'modal-backdrop': 'var(--z-modal-backdrop)',
+        modal: 'var(--z-modal)',
+        popover: 'var(--z-popover)',
+        tooltip: 'var(--z-tooltip)',
+        toast: 'var(--z-toast)',
+      },
+      screens: {
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1536px',
+      },
+    },
+  },
+  plugins: [],
+}
