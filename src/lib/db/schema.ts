@@ -387,6 +387,11 @@ export const discounts = pgTable('discounts', {
 export const gasulTankStatusEnum = pgEnum('gasul_tank_status', ['full', 'in_use', 'empty', 'reserve', 'returned']);
 export const gasulRefillStatusEnum = pgEnum('gasul_refill_status', ['ordered', 'delivered', 'cancelled']);
 
+// Laundry Consumables Tracking
+export const serviceTypeEnum = pgEnum('service_type', ['REGULAR', 'DELUXE', 'EXTRA_DRY', 'EXTRA_WASH', 'HAND_WASH']);
+export const machineTypeEnum = pgEnum('machine_type', ['LG_GIANT', 'LG_TITAN']);
+export const consumableTypeEnum = pgEnum('consumable_type', ['DETERGENT', 'REGULAR_FABCON', 'IMPORTED_FABCON', 'PLASTICS', 'GASUL']);
+
 export const gasulTanks = pgTable('gasul_tanks', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
@@ -460,6 +465,39 @@ export const gasulUsage = pgTable('gasul_usage', {
   tankIdx: index('gasul_usage_tank_idx').on(table.tankId),
   shiftIdx: index('gasul_usage_shift_idx').on(table.shiftId),
   startedAtIdx: index('gasul_usage_started_idx').on(table.startedAt),
+}));
+
+// Consumption Rules (per location, service type × machine type × hasImportedFabcon)
+export const consumptionRule = pgTable('consumption_rule', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  locationId: uuid('location_id').references(() => locations.id, { onDelete: 'cascade' }).notNull(),
+  serviceType: serviceTypeEnum('service_type').notNull(),
+  machineType: machineTypeEnum('machine_type').notNull(),
+  hasImportedFabcon: boolean('has_imported_fabcon').notNull().default(false),
+  detergentMl: integer('detergent_ml').notNull().default(80),
+  regularFabconMl: integer('regular_fabcon_ml').notNull().default(80),
+  importedFabconMl: integer('imported_fabcon_ml').notNull().default(40),
+  plasticsCount: integer('plastics_count').notNull().default(1),
+  gasKg: numeric('gas_kg', { precision: 6, scale: 3 }).notNull().default('0.15'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  uniq: uniqueIndex('consumption_rule_unique').on(table.locationId, table.serviceType, table.machineType, table.hasImportedFabcon),
+  locationIdx: index('consumption_rule_location_idx').on(table.locationId),
+}));
+
+// Consumable Thresholds (per location, per consumable type)
+export const consumableThreshold = pgTable('consumable_threshold', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  locationId: uuid('location_id').references(() => locations.id, { onDelete: 'cascade' }).notNull(),
+  consumableType: consumableTypeEnum('consumable_type').notNull(),
+  minimumQty: integer('minimum_qty').notNull(),
+  unit: varchar('unit', { length: 10 }).notNull(), // 'ml', 'kg', 'pcs'
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  uniq: uniqueIndex('consumable_threshold_unique').on(table.locationId, table.consumableType),
+  locationIdx: index('consumable_threshold_location_idx').on(table.locationId),
 }));
 
 export const auditLogs = pgTable('audit_logs', {
@@ -953,3 +991,9 @@ export type NewGasulUsage = typeof gasulUsage.$inferInsert;
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+
+export type ConsumptionRule = typeof consumptionRule.$inferSelect;
+export type NewConsumptionRule = typeof consumptionRule.$inferInsert;
+
+export type ConsumableThreshold = typeof consumableThreshold.$inferSelect;
+export type NewConsumableThreshold = typeof consumableThreshold.$inferInsert;
