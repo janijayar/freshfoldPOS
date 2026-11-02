@@ -635,7 +635,7 @@ function InventoryAdjustmentsContent() {
 
 export default function InventoryAdjustmentsPage() {
   return (
-    <PermissionGuard permission="inventory" action="view" fallback={<div />}>
+    <PermissionGuard permission="inventory" action="view">
       <Suspense fallback={
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-border bg-surface">

@@ -627,7 +627,7 @@ function EmployeeShiftsPageInner() {
 
 export default function EmployeeShiftsPage() {
   return (
-    <PermissionGuard permission="staff" action="view" fallback={<div />}>
+    <PermissionGuard permission="staff" action="view">
       <EmployeeShiftsPageInner />
     </PermissionGuard>
   );

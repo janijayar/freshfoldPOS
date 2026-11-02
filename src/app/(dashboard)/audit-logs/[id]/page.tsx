@@ -230,7 +230,7 @@ function AuditLogDetailContent() {
 
 export default function AuditLogDetailPage() {
   return (
-    <PermissionGuard permission="auditLogs" fallback={<div />}>
+    <PermissionGuard permission="auditLogs">
       <AuditLogDetailContent />
     </PermissionGuard>
   );

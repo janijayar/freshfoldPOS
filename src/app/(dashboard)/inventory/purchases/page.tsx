@@ -599,7 +599,7 @@ function formatCurrency(amount: number): string {
 
 export default function InventoryPurchasesPage() {
   return (
-    <PermissionGuard permission="inventory" action="view" fallback={<div />}>
+    <PermissionGuard permission="inventory" action="view">
       <InventoryPurchasesCalendarPage />
     </PermissionGuard>
   );

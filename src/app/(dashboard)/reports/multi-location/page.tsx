@@ -435,7 +435,7 @@ function MultiLocationReportsPageInner() {
 
 export default function MultiLocationReportsPage() {
   return (
-    <PermissionGuard permission="reports" action="view" fallback={<div />}>
+    <PermissionGuard permission="reports" action="view">
       <Suspense
         fallback={
           <div className="h-full flex flex-col">

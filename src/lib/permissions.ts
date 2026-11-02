@@ -81,6 +81,7 @@ export function getNavigationForRole(role: UserRole) {
   if (perm.dashboard) items.push({ name: 'Dashboard', href: '/dashboard', icon: 'LayoutDashboard' });
   if (perm.pos) items.push({ name: 'POS', href: '/pos', icon: 'CreditCard' });
   if (perm.inventory.view) items.push({ name: 'Product & Services', href: '/inventory', icon: 'Package' });
+  if (perm.inventory.view) items.push({ name: 'Categories', href: '/categories', icon: 'Tag' });
   if (perm.inventory.view) items.push({ name: 'Supplies Calendar', href: '/inventory/supplies/calendar', icon: 'Calendar' });
   if (perm.customers.view) items.push({ name: 'Customers', href: '/customers', icon: 'Users' });
   if (perm.reports) items.push({ name: 'Reports', href: '/reports', icon: 'BarChart3' });

@@ -150,7 +150,7 @@ function NotificationsPageInner() {
 
 export default function NotificationsPage() {
   return (
-    <PermissionGuard permission="notifications" action="view" fallback={<div />}>
+    <PermissionGuard permission="notifications" action="view">
       <NotificationsPageInner />
     </PermissionGuard>
   );

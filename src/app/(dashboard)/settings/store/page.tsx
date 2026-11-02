@@ -598,7 +598,7 @@ function StoreSettingsPageInner() {
 
 export default function StoreSettingsPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="store" fallback={<div />}>
+    <PermissionGuard permission="settings" action="store">
       <StoreSettingsPageInner />
     </PermissionGuard>
   );

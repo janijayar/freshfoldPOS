@@ -445,7 +445,7 @@ function ProfilePageContent() {
 
 export default function ProfilePageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="view" fallback={<div />}>
+    <PermissionGuard permission="settings" action="view">
       <ProfilePageContent />
     </PermissionGuard>
   );

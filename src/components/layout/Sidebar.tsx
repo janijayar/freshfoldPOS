@@ -19,6 +19,7 @@ import {
   Droplets,
   Activity,
   Calendar,
+  Tag,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { getNavigationForRole } from '@/lib/permissions';
@@ -36,6 +37,7 @@ const iconMap = {
   Droplets,
   Activity,
   Calendar,
+  Tag,
 } as const;
 
 interface SidebarProps {

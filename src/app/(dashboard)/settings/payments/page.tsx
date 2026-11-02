@@ -550,7 +550,7 @@ function PaymentSettingsPageInner() {
 
 export default function PaymentSettingsPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="payments" fallback={<div />}>
+    <PermissionGuard permission="settings" action="payments">
       <PaymentSettingsPageInner />
     </PermissionGuard>
   );

@@ -629,7 +629,7 @@ function LocationsPageInner() {
 
 export default function LocationsPage() {
   return (
-    <PermissionGuard permission="settings" action="locations" fallback={<div />}>
+    <PermissionGuard permission="settings" action="locations">
       <Suspense fallback={
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-border bg-surface">

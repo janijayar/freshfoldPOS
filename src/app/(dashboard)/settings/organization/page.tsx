@@ -1135,7 +1135,7 @@ function OrganizationSettingsPageInner() {
 
 export default function OrganizationSettingsPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="organization" fallback={<div />}>
+    <PermissionGuard permission="settings" action="organization">
       <OrganizationSettingsPageInner />
     </PermissionGuard>
   );

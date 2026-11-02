@@ -562,7 +562,7 @@ function ProductFormPageInner() {
 
 export default function ProductFormPage() {
   return (
-    <PermissionGuard permission="inventory" action="edit" fallback={<div />}>
+    <PermissionGuard permission="inventory" action="edit">
       <ProductFormPageInner />
     </PermissionGuard>
   );

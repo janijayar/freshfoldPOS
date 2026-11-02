@@ -120,6 +120,7 @@ export const categories = pgTable('categories', {
 }, (table) => ({
   orgIdx: index('categories_org_idx').on(table.organizationId),
   parentIdx: index('categories_parent_idx').on(table.parentId),
+  orgNameUnique: uniqueIndex('categories_org_name_unique').on(table.organizationId, table.name),
 }));
 
 // Products
@@ -381,6 +382,7 @@ export const discounts = pgTable('discounts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   orgIdx: index('discounts_org_idx').on(table.organizationId),
+  orgNameUnique: uniqueIndex('discounts_org_name_unique').on(table.organizationId, table.name),
 }));
 
 // Gasul (LPG) Tracker

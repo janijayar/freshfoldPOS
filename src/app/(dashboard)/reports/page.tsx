@@ -155,7 +155,7 @@ function ReportsContent() {
 
 export default function ReportsPage() {
   return (
-    <PermissionGuard permission="reports" fallback={<div />}>
+    <PermissionGuard permission="reports">
       <ReportsContent />
     </PermissionGuard>
   );

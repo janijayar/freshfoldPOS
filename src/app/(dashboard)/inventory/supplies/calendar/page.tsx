@@ -24,7 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, differenceInDays } from 'date-fns';
-import { PermissionGuard } from '@/components/auth/PermissionGuard';
+import { PermissionGuard, RoleGuard } from '@/components/auth/PermissionGuard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface SupplyItem {
   id: string;
@@ -64,6 +65,9 @@ interface DayData {
 }
 
 function SuppliesCalendarContent() {
+  const { canSpecific } = usePermissions();
+  const canCreateSupply = canSpecific('inventory', 'create');
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [supplies, setSupplies] = useState<SupplyItem[]>([]);
@@ -92,7 +96,21 @@ function SuppliesCalendarContent() {
       const suppliesRes = await fetch('/api/inventory?category=Laundry%20Supplies');
       if (suppliesRes.ok) {
         const suppliesData = await suppliesRes.json();
-        setSupplies(suppliesData.products || []);
+        // Transform inventory response to supply items format
+        const inventoryItems = suppliesData.inventory || [];
+        const transformedSupplies = inventoryItems.map((item: any) => ({
+          id: item.product?.id || item.inventory?.id,
+          productId: item.product?.id || '',
+          productName: item.product?.name || 'Unknown Product',
+          sku: item.product?.sku || item.variant?.sku || '',
+          categoryName: 'Laundry Supplies',
+          currentStock: item.inventory?.quantity || 0,
+          reorderPoint: item.inventory?.reorderPoint || 0,
+          reorderQuantity: item.inventory?.reorderQuantity || 0,
+          unitCost: item.product?.cost ? Number(item.product.cost) : 0,
+          supplier: '', // Not available from inventory API
+        }));
+        setSupplies(transformedSupplies);
       }
 
       // Fetch supply purchases (inventory adjustments with reason=purchase for supplies)
@@ -262,10 +280,12 @@ function SuppliesCalendarContent() {
             <Calendar className="mr-2 h-4 w-4" />
             Today
           </Button>
-          <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Supply Order
-          </Button>
+          {canCreateSupply && (
+            <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Supply Order
+            </Button>
+          )}
         </div>
       </div>
 
@@ -368,10 +388,12 @@ function SuppliesCalendarContent() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Package className="h-12 w-12 mx-auto text-text-muted/50 mb-2" />
                   <p>No supply orders yet</p>
-                  <Button variant="outline" onClick={() => setShowCreateDialog(true)} className="mt-4">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create First Order
-                  </Button>
+                  {canCreateSupply && (
+                    <Button variant="outline" onClick={() => setShowCreateDialog(true)} className="mt-4">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create First Order
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <ScrollArea>
@@ -581,7 +603,7 @@ function SuppliesCalendarContent() {
 
 export default function SuppliesCalendarPage() {
   return (
-    <PermissionGuard permission="inventory" action="view" fallback={<div />}>
+    <PermissionGuard permission="inventory" action="view">
       <Suspense fallback={
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -757,7 +757,7 @@ function UserManagementPageInner() {
 
 export default function UserManagementPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="users" fallback={<div />}>
+    <PermissionGuard permission="settings" action="users">
       <UserManagementPageInner />
     </PermissionGuard>
   );

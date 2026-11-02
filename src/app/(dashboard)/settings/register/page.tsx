@@ -507,7 +507,7 @@ function RegisterSettingsPageInner() {
 
 export default function RegisterSettingsPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="register" fallback={<div />}>
+    <PermissionGuard permission="settings" action="register">
       <RegisterSettingsPageInner />
     </PermissionGuard>
   );

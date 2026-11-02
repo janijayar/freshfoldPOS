@@ -13,6 +13,111 @@ async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
 }
 
+async function seedConsumablesDefaults(): Promise<void> {
+  // Get all locations
+  const locations = await db.select().from(schema.locations);
+
+  if (locations.length === 0) {
+    console.log('⚠️  No locations found, skipping consumables defaults');
+    return;
+  }
+
+  // Service types: 5 services
+  const serviceTypes = ['REGULAR', 'DELUXE', 'EXTRA_DRY', 'EXTRA_WASH', 'HAND_WASH'] as const;
+  // Machine types: 2 machines
+  const machineTypes = ['LG_GIANT', 'LG_TITAN'] as const;
+  // Fabcon states: 2 states (has imported fabcon or not)
+  const fabconStates = [false, true];
+
+  console.log('🌱 Seeding consumption rules...');
+
+  for (const location of locations) {
+    // Seed consumption rules: 5 services × 2 machines × 2 fabcon states = 20 rules per location
+    for (const serviceType of serviceTypes) {
+      for (const machineType of machineTypes) {
+        for (const hasImportedFabcon of fabconStates) {
+          // Gas defaults per design doc:
+          // Giant: 0.15kg normal, 0.04kg for Extra Dry (10min = 25% of 40min)
+          // Titan: 0.20kg normal, 0.05kg for Extra Dry
+          let gasKg = '0.15';
+
+          if (machineType === 'LG_TITAN') {
+            gasKg = '0.20';
+          }
+
+          if (serviceType === 'EXTRA_DRY') {
+            gasKg = machineType === 'LG_GIANT' ? '0.04' : '0.05';
+          }
+
+          await db.insert(schema.consumptionRule).values({
+            locationId: location.id,
+            serviceType,
+            machineType,
+            hasImportedFabcon,
+            detergentMl: 80,
+            regularFabconMl: hasImportedFabcon ? 0 : 80,
+            importedFabconMl: hasImportedFabcon ? 40 : 0,
+            plasticsCount: 1,
+            gasKg,
+          }).onConflictDoUpdate({
+            target: [
+              schema.consumptionRule.locationId,
+              schema.consumptionRule.serviceType,
+              schema.consumptionRule.machineType,
+              schema.consumptionRule.hasImportedFabcon,
+            ],
+            set: {
+              detergentMl: 80,
+              regularFabconMl: hasImportedFabcon ? 0 : 80,
+              importedFabconMl: hasImportedFabcon ? 40 : 0,
+              plasticsCount: 1,
+              gasKg,
+              updatedAt: new Date(),
+            },
+          });
+        }
+      }
+    }
+
+    console.log(`✅ Seeded ${serviceTypes.length * machineTypes.length * fabconStates.length} consumption rules for location ${location.code}`);
+  }
+
+  // Seed consumable thresholds: 5 thresholds per location
+  console.log('🌱 Seeding consumable thresholds...');
+
+  const thresholdsData = [
+    { consumableType: 'DETERGENT' as const, minimumQty: 5000, unit: 'ml' as const },
+    { consumableType: 'REGULAR_FABCON' as const, minimumQty: 5000, unit: 'ml' as const },
+    { consumableType: 'IMPORTED_FABCON' as const, minimumQty: 2000, unit: 'ml' as const },
+    { consumableType: 'PLASTICS' as const, minimumQty: 100, unit: 'pcs' as const },
+    { consumableType: 'GASUL' as const, minimumQty: 5, unit: 'kg' as const },
+  ];
+
+  for (const location of locations) {
+    for (const threshold of thresholdsData) {
+      await db.insert(schema.consumableThreshold).values({
+        locationId: location.id,
+        consumableType: threshold.consumableType,
+        minimumQty: threshold.minimumQty,
+        unit: threshold.unit,
+      }).onConflictDoUpdate({
+        target: [
+          schema.consumableThreshold.locationId,
+          schema.consumableThreshold.consumableType,
+        ],
+        set: {
+          minimumQty: threshold.minimumQty,
+          unit: threshold.unit,
+          updatedAt: new Date(),
+        },
+      });
+    }
+    console.log(`✅ Seeded ${thresholdsData.length} consumable thresholds for location ${location.code}`);
+  }
+
+  console.log('✅ Consumables defaults seeded successfully!');
+}
+
 async function seed() {
   console.log('🌱 Starting database seed...');
 
@@ -223,6 +328,9 @@ async function seed() {
     }).returning();
 
     console.log('✅ Registers created/updated');
+
+    // Seed consumables defaults (consumption rules & thresholds)
+    await seedConsumablesDefaults();
 
     // Create categories
     const beveragesResult = await db.insert(schema.categories).values({
@@ -591,3 +699,5 @@ seed().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+export { seedConsumablesDefaults };

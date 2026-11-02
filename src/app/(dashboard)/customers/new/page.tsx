@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import {
   ArrowLeft,
@@ -15,10 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCustomers } from '@/hooks/useApi';
@@ -31,13 +32,10 @@ const customerSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
-  state: z.string().optional(),
   postalCode: z.string().optional(),
   country: z.string().optional(),
-  dateOfBirth: z.string().optional(),
   notes: z.string().max(1000).optional(),
   marketingConsent: z.boolean().default(false),
-  loyaltyTier: z.enum(['bronze', 'silver', 'gold', 'platinum']).default('bronze'),
 });
 
 type CustomerFormData = z.infer<typeof customerSchema>;
@@ -49,17 +47,16 @@ const defaultValues: CustomerFormData = {
   phone: '',
   address: '',
   city: '',
-  state: '',
   postalCode: '',
   country: 'US',
-  dateOfBirth: '',
   notes: '',
   marketingConsent: false,
-  loyaltyTier: 'bronze',
 };
 
 function NewCustomerPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || '/customers';
 
   const [formData, setFormData] = useState<CustomerFormData>(defaultValues);
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerFormData, string>>>({});
@@ -125,7 +122,7 @@ function NewCustomerPageInner() {
         throw new Error(errData.error || 'Failed to create customer');
       }
 
-      router.push('/customers');
+        router.push(returnTo);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save customer. Please try again.');
@@ -172,6 +169,12 @@ function NewCustomerPageInner() {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <div className="mx-4 mt-4 p-3 rounded-md border border-danger bg-danger-muted text-danger text-sm" role="alert">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-4">
         <div className="max-w-2xl mx-auto space-y-6">
@@ -235,31 +238,6 @@ function NewCustomerPageInner() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="loyaltyTier">Loyalty Tier</Label>
-                <Select value={formData.loyaltyTier} onValueChange={(v) => handleChange('loyaltyTier', v as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select loyalty tier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bronze">Bronze</SelectItem>
-                    <SelectItem value="silver">Silver</SelectItem>
-                    <SelectItem value="gold">Gold</SelectItem>
-                    <SelectItem value="platinum">Platinum</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="marketingConsent">
                   <div className="flex items-center justify-between">
                     <span>Marketing Consent</span>
@@ -303,15 +281,6 @@ function NewCustomerPageInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    placeholder="CA"
-                    value={formData.state}
-                    onChange={(e) => handleChange('state', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="postalCode">Postal Code</Label>
                   <Input
                     id="postalCode"
@@ -324,12 +293,41 @@ function NewCustomerPageInner() {
 
               <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  placeholder="US"
-                  value={formData.country}
-                  onChange={(e) => handleChange('country', e.target.value)}
-                />
+                <Select value={formData.country} onValueChange={(v) => handleChange('country', v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="US">United States (US)</SelectItem>
+                    <SelectItem value="PH">Philippines (PH)</SelectItem>
+                    <SelectItem value="CA">Canada (CA)</SelectItem>
+                    <SelectItem value="GB">United Kingdom (GB)</SelectItem>
+                    <SelectItem value="AU">Australia (AU)</SelectItem>
+                    <SelectItem value="SG">Singapore (SG)</SelectItem>
+                    <SelectItem value="JP">Japan (JP)</SelectItem>
+                    <SelectItem value="HK">Hong Kong (HK)</SelectItem>
+                    <SelectItem value="NZ">New Zealand (NZ)</SelectItem>
+                    <SelectItem value="DE">Germany (DE)</SelectItem>
+                    <SelectItem value="FR">France (FR)</SelectItem>
+                    <SelectItem value="ES">Spain (ES)</SelectItem>
+                    <SelectItem value="IT">Italy (IT)</SelectItem>
+                    <SelectItem value="NL">Netherlands (NL)</SelectItem>
+                    <SelectItem value="BR">Brazil (BR)</SelectItem>
+                    <SelectItem value="MX">Mexico (MX)</SelectItem>
+                    <SelectItem value="IN">India (IN)</SelectItem>
+                    <SelectItem value="CN">China (CN)</SelectItem>
+                    <SelectItem value="KR">South Korea (KR)</SelectItem>
+                    <SelectItem value="TW">Taiwan (TW)</SelectItem>
+                    <SelectItem value="TH">Thailand (TH)</SelectItem>
+                    <SelectItem value="VN">Vietnam (VN)</SelectItem>
+                    <SelectItem value="ID">Indonesia (ID)</SelectItem>
+                    <SelectItem value="MY">Malaysia (MY)</SelectItem>
+                    <SelectItem value="AE">United Arab Emirates (AE)</SelectItem>
+                    <SelectItem value="SA">Saudi Arabia (SA)</SelectItem>
+                    <SelectItem value="ZA">South Africa (ZA)</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -378,7 +376,7 @@ function NewCustomerPageInner() {
 
 export default function NewCustomerPage() {
   return (
-    <PermissionGuard permission="customers" action="create" fallback={<div />}>
+    <PermissionGuard permission="customers" action="create">
       <NewCustomerPageInner />
     </PermissionGuard>
   );

@@ -429,7 +429,7 @@ function TicketsPageInner() {
 
 export default function TicketsPage() {
   return (
-    <PermissionGuard permission="pos" action="view" fallback={<div />}>
+    <PermissionGuard permission="pos" action="view">
       <TicketsPageInner />
     </PermissionGuard>
   );

@@ -565,7 +565,7 @@ function CustomerLoyaltyPageInner() {
 
 export default function CustomerLoyaltyPage() {
   return (
-    <PermissionGuard permission="customers" action="view" fallback={<div />}>
+    <PermissionGuard permission="customers" action="view">
       <CustomerLoyaltyPageInner />
     </PermissionGuard>
   );

@@ -22,7 +22,9 @@ import {
   ClipboardList,
   Loader2,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
+  Users,
+  User
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,8 +38,10 @@ import { SkeletonPOS } from '@/components/ui/skeleton';
 import { ErrorState, InlineError } from '@/components/ui/error-state';
 import { EmptyListState } from '@/components/ui/empty-state';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useProductsWithInventory } from '@/hooks/useApi';
 import { useRegisters } from '@/hooks/useApi';
+import { useCustomers } from '@/hooks/useApi';
 
 type Product = {
   id: string;
@@ -77,6 +81,8 @@ export default function PosPage({ params }: { params: { registerId: string } }) 
   const [isOnline, setIsOnline] = useState(true);
   const [showCustomerDialog, setShowCustomerDialog] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string } | null>(null);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerSearchSubmitted, setCustomerSearchSubmitted] = useState('');
 
   // Get register info
   const { data: registersData, loading: registersLoading } = useRegisters({ active: 'true' });
@@ -89,6 +95,10 @@ export default function PosPage({ params }: { params: { registerId: string } }) 
   const products = productsData?.products || [];
   const categoryNames = products.map(p => p.category?.name).filter((name): name is string => Boolean(name));
   const categories = ['All', ...Array.from(new Set(categoryNames))];
+
+  // Get customers for this organization
+  const { data: customersData } = useCustomers({ limit: '100' });
+  const customers = customersData?.customers || [];
 
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const tax = Math.round(subtotal * 0.0825);
@@ -645,6 +655,37 @@ export default function PosPage({ params }: { params: { registerId: string } }) 
               Hold Sale
             </Button>
 
+            {/* Customer Selection */}
+            <div className="space-y-2 pt-2 border-t border-border">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Customer</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCustomerDialog(true)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  {selectedCustomer ? 'Change' : 'Add Customer'}
+                </Button>
+              </div>
+              {selectedCustomer && (
+                <div className="flex items-center justify-between p-2 bg-surface rounded-lg border border-border">
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-text-muted" />
+                    <span className="font-medium">{selectedCustomer.name}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSelectedCustomer(null)}
+                    aria-label="Remove customer"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2 pt-2">
               <div className="flex gap-2">
                 <Button
@@ -707,6 +748,82 @@ export default function PosPage({ params }: { params: { registerId: string } }) 
           </div>
         </div>
       </div>
+
+    {/* Customer Dialog */}
+    <Dialog open={showCustomerDialog} onOpenChange={setShowCustomerDialog}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Select Customer</DialogTitle>
+            <DialogDescription>Choose an existing customer or create a new one</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 p-4 overflow-y-auto max-h-[60vh]">
+            <div className="space-y-2">
+              <Label htmlFor="customerSearch">Search Customers</Label>
+              <Input
+                id="customerSearch"
+                placeholder="Search by name, email, or phone..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && setCustomerSearchSubmitted(customerSearch)}
+                className="mb-4"
+              />
+            </div>
+            {customers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto text-text-muted/50 mb-2" />
+                <p>No customers found</p>
+                <Button variant="outline" onClick={() => router.push(`/customers/new?returnTo=/pos/${params.registerId}`)} className="mt-4">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Customer
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                {customers
+                  .filter(c => {
+                    const search = customerSearchSubmitted.toLowerCase();
+                    const name = `${c.firstName} ${c.lastName}`.toLowerCase();
+                    return name.includes(search) ||
+                           c.email?.toLowerCase().includes(search) ||
+                           c.phone?.includes(search);
+                  })
+                  .map(customer => (
+                    <Button
+                      key={customer.id}
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setSelectedCustomer({ id: customer.id, name: `${customer.firstName} ${customer.lastName}` });
+                        setShowCustomerDialog(false);
+                      }}
+                    >
+                      <div className="flex-1 text-left">
+                        <p className="font-medium">{customer.firstName} {customer.lastName}</p>
+                        <p className="text-sm text-text-muted">
+                          {customer.email || 'No email'} · {customer.phone || 'No phone'}
+                        </p>
+                      </div>
+                      <User className="h-4 w-4" />
+                    </Button>
+                  ))}
+              </div>
+            )}
+            <div className="pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  console.log('DEBUG: Button clicked, navigating to', `/customers/new?returnTo=/pos/${params.registerId}`);
+                  window.location.href = `/customers/new?returnTo=/pos/${params.registerId}`;
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create New Customer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { ReactNode } from 'react';
 import { usePermissions, useRequirePermission } from '@/hooks/usePermissions';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Permission } from '@/lib/permissions';
 
 interface PermissionGuardProps {
@@ -15,17 +14,10 @@ interface PermissionGuardProps {
 }
 
 export function PermissionGuard({ children, permission, action, fallback }: PermissionGuardProps) {
-  const router = useRouter();
   const { hasAccess, role } = useRequirePermission(permission, action);
-  const { isCashier } = usePermissions();
-
-  useEffect(() => {
-    if (!hasAccess) {
-      router.push('/dashboard');
-    }
-  }, [hasAccess, router]);
 
   if (!hasAccess) {
+    if (fallback) return <>{fallback}</>;
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card className="max-w-md w-full">
@@ -51,13 +43,6 @@ export function RoleGuard({ children, allowedRoles = ['owner', 'manager', 'cashi
   allowedRoles?: Array<'owner' | 'manager' | 'cashier'>
 }) {
   const { role } = usePermissions();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!allowedRoles.includes(role)) {
-      router.push('/dashboard');
-    }
-  }, [role, allowedRoles, router]);
 
   if (!allowedRoles.includes(role)) {
     return null;

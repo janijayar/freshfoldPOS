@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { inventory, products, productVariants, locations } from '@/lib/db/schema';
+import { inventory, products, productVariants, locations, categories } from '@/lib/db/schema';
 import { eq, and, or, ilike, desc, asc, gte, lte, inArray } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
 import { createAuditLog, auditActions, auditEntityTypes } from '@/lib/audit';
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const locationId = searchParams.get('locationId');
     const productId = searchParams.get('productId');
+    const category = searchParams.get('category');
     const lowStock = searchParams.get('lowStock');
     const search = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -42,6 +43,9 @@ export async function GET(request: NextRequest) {
         )!
       );
     }
+    if (category) {
+      conditions.push(eq(categories.name, category));
+    }
 
     const results = await db
       .select({
@@ -54,6 +58,7 @@ export async function GET(request: NextRequest) {
       .leftJoin(products, eq(inventory.productId, products.id))
       .leftJoin(productVariants, eq(inventory.variantId, productVariants.id))
       .leftJoin(locations, eq(inventory.locationId, locations.id))
+      .leftJoin(categories, eq(products.categoryId, categories.id))
       .where(and(...conditions))
       .orderBy(asc(products.name))
       .limit(limit)

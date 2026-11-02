@@ -556,7 +556,7 @@ function TaxSettingsPage() {
 
 export default function TaxSettingsPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="tax" fallback={<div />}>
+    <PermissionGuard permission="settings" action="tax">
       <TaxSettingsPage />
     </PermissionGuard>
   );

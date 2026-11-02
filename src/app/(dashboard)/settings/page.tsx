@@ -162,7 +162,7 @@ function SettingsPageInner() {
 
 export default function SettingsPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="view" fallback={<div />}>
+    <PermissionGuard permission="settings" action="view">
       <SettingsPageInner />
     </PermissionGuard>
   );

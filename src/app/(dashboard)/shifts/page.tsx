@@ -692,7 +692,7 @@ function ShiftsPageInner({ searchParams }: { searchParams: { get: (key: string) 
 
 export default function ShiftsPage() {
   return (
-    <PermissionGuard permission="shifts" action="view" fallback={<div />}>
+    <PermissionGuard permission="shifts" action="view">
       <Suspense fallback={
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-border bg-surface">

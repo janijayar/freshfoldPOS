@@ -524,7 +524,7 @@ function NewProductPageInner() {
 
 export default function NewProductPage() {
   return (
-    <PermissionGuard permission="inventory" action="create" fallback={<div />}>
+    <PermissionGuard permission="inventory" action="create">
       <NewProductPageInner />
     </PermissionGuard>
   );

@@ -46,6 +46,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
+import { useApi } from '@/hooks/useApi';
 
 type Customer = {
   id: string;
@@ -130,22 +131,7 @@ function CustomerDetailContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'loyalty'>('overview');
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setCustomer(mockCustomer);
-      setOrders(mockOrders);
-    } catch {
-      setError('Failed to load customer. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
@@ -154,7 +140,63 @@ function CustomerDetailContent() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [customerId]);
+  }, []);
+
+  // Fetch customer data
+  const { data: customerData, loading: customerLoading, error: customerError, refetch: refetchCustomer } = useApi<{ customer: any }>(
+    `/api/customers?id=${customerId}`,
+    { immediate: true }
+  );
+
+  // Fetch customer orders
+  const { data: ordersData, loading: ordersLoading, error: ordersError } = useApi<{ orders: any[] }>(
+    `/api/orders?customerId=${customerId}&limit=50`,
+    { immediate: true }
+  );
+
+  useEffect(() => {
+    if (!customerLoading && customerData?.customer) {
+      const c = customerData.customer;
+      setCustomer({
+        id: c.id,
+        name: `${c.firstName} ${c.lastName}`,
+        email: c.email || '',
+        phone: c.phone || '',
+        address: c.address || '',
+        city: c.city || '',
+        state: c.state || '',
+        zip: c.zip || '',
+        loyaltyTier: c.loyaltyTier || 'bronze',
+        loyaltyPoints: c.loyaltyPoints || 0,
+        totalSpent: c.totalSpent || 0,
+        orderCount: c.visitCount || 0,
+        avgOrderValue: c.visitCount > 0 ? (c.totalSpent || 0) / c.visitCount : 0,
+        lastVisit: c.lastVisitAt ? new Date(c.lastVisitAt).toLocaleDateString() : '—',
+        firstVisit: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—',
+        createdAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—',
+        status: c.isActive ? 'active' : 'inactive',
+        marketingConsent: c.acceptsMarketing || false,
+        notes: c.notes || '',
+      });
+      setIsLoading(false);
+    } else if (!customerLoading && customerError) {
+      setError('Failed to load customer. Please try again.');
+      setIsLoading(false);
+    }
+  }, [customerData, customerLoading, customerError]);
+
+  useEffect(() => {
+    if (!ordersLoading && ordersData?.orders) {
+      setOrders(ordersData.orders.map((o: any) => ({
+        id: o.id,
+        date: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : '—',
+        total: o.total || 0,
+        items: o.items?.length || 0,
+        status: o.status || 'pending',
+        paymentMethod: o.paymentMethod || '—',
+      })));
+    }
+  }, [ordersData, ordersLoading, ordersError]);
 
   const TierBadge = ({ tier }: { tier: string }) => {
     const tierConfig = loyaltyTiers.find((t) => t.name === tier) || loyaltyTiers[0];
@@ -211,7 +253,7 @@ function CustomerDetailContent() {
     return (
       <ErrorState
         variant={!isOnline ? 'network' : 'not-found'}
-        onRetry={fetchData}
+        onRetry={() => { refetchCustomer(); }}
         onGoHome={() => router.push('/customers')}
         title={!isOnline ? 'You are offline' : 'Customer not found'}
         description={!isOnline ? 'Data will sync when connection is restored.' : 'The customer you are looking for does not exist.'}
@@ -539,7 +581,7 @@ function CustomerDetailPageInner() {
 
 export default function CustomerDetailPage() {
   return (
-    <PermissionGuard permission="customers" action="view" fallback={<div />}>
+    <PermissionGuard permission="customers" action="view">
       <CustomerDetailPageInner />
     </PermissionGuard>
   );

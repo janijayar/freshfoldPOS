@@ -501,7 +501,7 @@ function MultiLocationListPageInner() {
 
 export default function MultiLocationListPageWrapper() {
   return (
-    <PermissionGuard permission="settings" action="locations" fallback={<div />}>
+    <PermissionGuard permission="settings" action="locations">
       <MultiLocationListPageInner />
     </PermissionGuard>
   );

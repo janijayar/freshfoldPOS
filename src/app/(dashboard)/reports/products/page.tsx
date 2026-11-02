@@ -695,7 +695,7 @@ function ProductReportsPageInner() {
 
 export default function ProductReportsPage() {
   return (
-    <PermissionGuard permission="reports" action="view" fallback={<div />}>
+    <PermissionGuard permission="reports" action="view">
       <Suspense
         fallback={
           <div className="h-full flex flex-col">

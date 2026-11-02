@@ -456,7 +456,7 @@ function GasulTrackerPage() {
 
 export default function GasulPage() {
   return (
-    <PermissionGuard permission="gasul" fallback={<div />}>
+    <PermissionGuard permission="gasul">
       <GasulTrackerPage />
     </PermissionGuard>
   );

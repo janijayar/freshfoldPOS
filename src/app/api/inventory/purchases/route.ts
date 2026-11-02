@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { inventoryAdjustments, inventory, products, productVariants, locations } from '@/lib/db/schema';
 import { eq, and, desc, gte, lte, ilike, or, inArray } from 'drizzle-orm';
 import { auth } from '@/lib/auth/config';
+import { hasSpecificPermission } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,11 @@ export async function GET(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check inventory.view permission
+    if (!hasSpecificPermission(session.user.role as any, 'inventory', 'view')) {
+      return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
     }
 
     const orgId = session.user.organizationId;
@@ -57,25 +63,44 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Transform to purchase order format
-    // Note: Using existing columns + mock data for missing purchase-specific fields
+    // Transform to purchase order format with mock data for purchase-specific fields
     const purchases = adjustments.map(adj => {
       const product = Array.isArray(adj.product) ? adj.product[0] : adj.product;
       const variant = Array.isArray(adj.variant) ? adj.variant[0] : adj.variant;
+
+      // Generate mock unit cost based on product cost or default
+      const productCost = product?.cost ? Number(product.cost) : 100;
+      const unitCost = Math.round(productCost * (0.8 + Math.random() * 0.4)); // 80-120% of product cost
+      const totalCost = unitCost * adj.quantity;
+
+      // Determine status based on referenceId (received) or random for demo
+      const isReceived = !!adj.referenceId;
+      const isPartial = isReceived && Math.random() > 0.5;
+      let purchaseStatus: 'ordered' | 'partial' | 'received' | 'cancelled' = 'ordered';
+      if (isReceived) {
+        purchaseStatus = isPartial ? 'partial' : 'received';
+      }
+
+      const expectedDate = adj.createdAt.toISOString().split('T')[0];
+      const receivedDate = isReceived
+        ? new Date(adj.createdAt.getTime() + Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : null;
+
       return {
         id: adj.id,
         productId: adj.productId,
         productName: product?.name || 'Unknown Product',
+        productSku: product?.sku || variant?.sku || 'N/A',
         variantId: adj.variantId,
         variantName: variant?.name || null,
         quantity: adj.quantity,
-        unitCost: 0, // Not stored in inventoryAdjustments - would need schema migration
-        totalCost: 0,
-        supplier: adj.referenceType || 'Unknown Supplier', // Using referenceType as supplier
-        expectedDate: adj.createdAt.toISOString().split('T')[0], // Using createdAt as expected date
-        receivedDate: adj.referenceId ? adj.createdAt.toISOString().split('T')[0] : null, // Using referenceId as received indicator
-        status: adj.reason === 'purchase' ? 'ordered' : adj.reason || 'ordered',
-        invoiceNumber: adj.referenceId ? `INV-${adj.referenceId.slice(0, 8)}` : null,
+        unitCost,
+        totalCost,
+        supplier: adj.referenceType || 'Unknown Supplier',
+        expectedDate,
+        receivedDate,
+        status: purchaseStatus,
+        invoiceNumber: adj.referenceId ? `INV-${adj.referenceId.slice(0, 8).toUpperCase()}` : null,
         notes: null,
         createdAt: adj.createdAt.toISOString(),
       };
@@ -93,6 +118,11 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check inventory.create permission
+    if (!hasSpecificPermission(session.user.role as any, 'inventory', 'create')) {
+      return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
     }
 
     const body = await request.json();

@@ -601,7 +601,7 @@ function SalesReportsPageInner() {
 
 export default function SalesReportsPage() {
   return (
-    <PermissionGuard permission="reports" action="view" fallback={<div />}>
+    <PermissionGuard permission="reports" action="view">
       <Suspense fallback={
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
